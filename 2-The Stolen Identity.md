@@ -55,23 +55,24 @@ I returned to the legacy application's **Owners** list and traced a relationship
 
 ### Stage 4 — Persist: Reviewing the exposed API scope
 
-I examined **Expose an API** on the legacy application and found that the lab's attack path included a custom delegated scope. Publishing a scope makes the application addressable as an API resource for clients that request that permission; it does **not**, by itself, grant consent or establish attacker access.
+I examined **Expose an API** on the Legacy-Sync-Service application and found that there was a custom delegated scope. This new scope makes the Legacy-Sync-Service application addressable as an API resource for clients that request that permission. If the attacker's client secret is removed from the legacy application, they could still leverage the exposed custom API scope and their rogue Labs-App application to launch a separate phishing campaign.
 
-I then connected that scope to the second application's role in the simulated OAuth flow. The exposed scope provided another way to request authorization involving the trusted legacy application, subject to the tenant's consent and authorization controls.
+> **Go to Expose an API**
+<img width="405" height="513" alt="image" src="https://github.com/user-attachments/assets/818de223-40a3-49e8-83a8-a4423954398a" />
 
-**Evidence to capture:** **Expose an API** showing the existence of the custom scope. Crop or redact its display name and any embedded challenge text.
+> **New scope added**
+<img width="1287" height="389" alt="image" src="https://github.com/user-attachments/assets/e76b64fb-30ea-47d7-b870-2da3009ff86a" />
 
-![Stage 4 — Exposed API scope](screenshots/04-exposed-api-scope.png)
+> **Attacker's app service principal added an owner to legacy app**
+<img width="1307" height="428" alt="image" src="https://github.com/user-attachments/assets/8aa7085f-9025-4ba0-b82b-3431567e1823" />
 
-### Stage 5 — Loot: Reconstructing the consent-phishing path
+### Stage 5 — Loot
 
-Finally, I examined the second application's **Authentication** configuration and its redirect URI. In the simulated chain, the redirect URI pointed to attacker-controlled infrastructure. I connected the rogue app's client ID, the custom scope, and the redirect URI to understand how a deceptive OAuth authorization request could send an authorization code to the registered callback endpoint after a user approved consent.
+I examined the attacker's Labs-App application authentication configuration and its redirect URI. The redirect URI pointed to the attacker's infrastructure with the intention of stealing victim's credentials and session tokens. 
 
-A code alone is not equivalent to a usable token: the application must also satisfy the authorization-code exchange requirements, including any applicable client authentication or PKCE requirements. The key investigative concern was the combination of a deceptive consent request, an attacker-controlled client, and an authorization grant that could survive remediation of the user's password or session.
+> **Attacker's redirect URI that looks like a legit login interface**
+<img width="1131" height="522" alt="image" src="https://github.com/user-attachments/assets/571ca47c-1187-48f0-90cc-b99ad1fe742f" />
 
-**Evidence to capture:** Redirect URI configuration with the hostname redacted; API permissions and consent details where visible. Do not publish a functional phishing link.
-
-![Stage 5 — Redirect URI configuration](screenshots/05-redirect-uri.png)
 
 ### Investigation summary
 
@@ -83,13 +84,6 @@ A code alone is not equivalent to a usable token: the application must also sati
 | Persist | Expose an API | A custom delegated scope enabled an additional OAuth authorization path |
 | Loot | Rogue app Authentication; consent configuration | Redirect URI and consent flow could direct authorization artifacts to an attacker-controlled client |
 
-## 🛠️ What Broke / What Surprised Me
-
-The most surprising part was how much control could be hidden outside the usual list of privileged directory roles. I would normally begin an identity investigation by checking sign-ins, MFA, and administrator assignments. This lab showed me that **application ownership, credentials, and OAuth grants** can create serious access paths even when the attacker is not a Global Administrator.
-
-I also learned that app registration permissions are distinct from consent permissions. A user may be able to register an application under the tenant's settings, but that does not automatically authorize it to access every API or obtain tenant-wide admin consent. The precise tenant settings and consent policies matter.
-
-**Personal troubleshooting note to complete:** [Describe an actual point of confusion, a view you initially overlooked, or a hypothesis you changed after checking the app configuration.]
 
 ## 📊 Findings and Recommendations
 
@@ -106,19 +100,3 @@ I also learned that app registration permissions are distinct from consent permi
 1. **Contain the application compromise:** Revoke the malicious client secret; remove the rogue service principal from the legacy app's Owners list; remove unauthorized redirect URIs and the custom exposed API scope after validating dependencies. Disable or remove the rogue app as appropriate under incident response procedures.
 2. **Revoke persistent authorization:** Identify and explicitly revoke unauthorized **OAuth2PermissionGrant** delegated consent records. Also review and remove unauthorized app-role assignments and credentials where present. Revoke user sessions separately as needed.
 3. **Reduce privilege and improve detection:** Review Microsoft Graph application permissions and admin consent; restrict who can register applications when operationally appropriate; regularly audit application Owners; and monitor audit logs for new credentials, owners, consent grants, scopes, and redirect URI changes.
-
-## 💡 What I Learned
-
-- **Technical:** App-only client credentials and delegated OAuth consent are different authentication/authorization paths, and both require investigation during an app compromise.
-- **Identity security:** Application ownership can be a powerful privilege path that is easy to miss when reviewing only directory administrator roles.
-- **Persistence:** Removing a malicious secret is insufficient if the attacker still controls an application owner or retains an unauthorized OAuth grant.
-- **Investigation method:** Following the relationships between two app registrations made the sequence clearer than treating each configuration page as an isolated finding.
-- **What I'd do differently:** I would build a relationship map of users, service principals, app owners, secrets, permissions, and consent grants at the beginning of the investigation, then verify each link against audit logs where available.
-
-## 📸 Evidence and Screenshots
-
-The `screenshots/` paths above are placeholders. Replace them with sanitized screenshots from the actual lab before publishing. Exclude challenge flags, live secrets, access tokens, tenant-specific sensitive identifiers, and functional phishing URLs.
-
-## ⚖️ Scope and Limitations
-
-This report documents a **simulated training scenario** and the investigation approach taught in the lab. The sequence is reconstructed from the scenario and Entra configuration; it is not a claim that I observed a real-world compromise or personally executed the attack. Where actual audit logs, sign-in records, or OAuth grant objects were not reviewed, the report does not claim they were independently verified.
