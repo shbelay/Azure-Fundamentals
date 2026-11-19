@@ -38,67 +38,76 @@ My objective was to identify potentially excessive privileges and determine whet
 
 After reviewing role assignments, I explored how Azure CLI and PowerShell could retrieve role assignment information rather than manually navigating through individual resources.
 
-My objective was to understand how command-line tools could support efficient, repeatable access reviews, particularly in enterprise environments containing multiple subscriptions and resource groups. 
+> **Click Azure CLI**
+<img width="1172" height="72" alt="image" src="https://github.com/user-attachments/assets/b4b2a8f7-bdc6-4f8c-b3a1-36a09d2b9ab6" />
 
+> **Retreived role assignments through PowerShell**
+<img width="712" height="100" alt="image" src="https://github.com/user-attachments/assets/4cc2dfd6-99e7-4411-b365-0f7d1d236195" />
+
+> **Located an orphaned account with active permission**
+<img width="701" height="442" alt="image" src="https://github.com/user-attachments/assets/a6d35b75-7167-4dd0-8937-7f47c12c16c8" />
 
 
 
 ### Stage 3: Audit Access Using Azure Resource Graph
 
-I continued the audit using **Azure Resource Graph Explorer** and Kusto Query Language (KQL) to examine resource authorization records across accessible scopes.
+I continued the audit using **Azure Resource Graph Explorer** and Kusto Query Language (KQL) to examine resource authorization records. My objective was to understand how KQL could be used to identify privileged role assignments, filter results, and perform access reviews. 
 
-My objective was to understand how KQL could be used to identify privileged role assignments, filter results, and perform access reviews efficiently across a large Azure environment. Unlike manually reviewing individual IAM blades, Azure Resource Graph provides a centralized way to analyze supported resource authorization records at scale.
+> **Navigated to Resource Graph**
+<img width="431" height="481" alt="image" src="https://github.com/user-attachments/assets/30c31fa5-c7a7-421d-bf28-f75aefb094c8" />
 
-**Evidence:** Azure Resource Graph query and results.
+> **Queried authorizationresources table for the orphaned account**
+<img width="792" height="162" alt="image" src="https://github.com/user-attachments/assets/c70dbbf0-2594-491f-8f9f-b69ed58b529e" />
 
-<!-- Insert KQL query and results screenshot here. -->
-
-**Observation:** [Document the actual finding.]
 
 ### Stage 4: Review Privileged Identity Management (PIM)
-
-The previous audit methods focused primarily on existing active role assignments. However, reviewing active permissions alone does not necessarily provide a complete picture of privileged access.
 
 I examined Azure resource roles in **Microsoft Entra Privileged Identity Management (PIM)** to understand the distinction between active and eligible assignments.
 
 - **Active assignments:** Permissions currently available to the assigned identity.
-- **Eligible assignments:** Permissions that an identity can activate when needed, subject to configured activation requirements.
+- **Eligible assignments:** Permissions that an identity can activate when needed.
 
-My objective was to identify privileged access that might not be visible through a traditional active-role review and understand how just-in-time access reduces the need for standing privileges.
+> **Navigate to Privileged Identity Management (PIM)**
+<img width="522" height="272" alt="image" src="https://github.com/user-attachments/assets/ad6b28c8-f379-4796-bd14-5dae37c12132" />
 
-**Evidence:** PIM active and eligible Azure resource role assignments.
+> **Azure Resources**
+<img width="265" height="365" alt="image" src="https://github.com/user-attachments/assets/eb0a46a2-60d2-4450-b090-682ad60b4185" />
 
-<!-- Insert PIM screenshots here. -->
+> **Click Manage resource after selecting the appropriate drop-down information**
+<img width="565" height="587" alt="image" src="https://github.com/user-attachments/assets/811a6c0a-273b-4d25-b77b-ce47fc644882" />
 
-**Observation:** [Document the actual finding.]
+> **Click Assignments**
+<img width="271" height="242" alt="image" src="https://github.com/user-attachments/assets/39bcf3dc-4d88-4623-9fbd-b6fc49218d19" />
+
+> **Click Export**
+<img width="1046" height="78" alt="image" src="https://github.com/user-attachments/assets/460c12cc-0701-46f4-9d93-8a50ea529ada" />
+
+> **Click Start**
+<img width="354" height="865" alt="image" src="https://github.com/user-attachments/assets/614c1da3-1a39-4060-ab00-91655033a66b" />
+
+> **Review audit report**
+<img width="1867" height="627" alt="image" src="https://github.com/user-attachments/assets/d6402ed6-2a5e-4541-a3e1-071393c989be" />
+
 
 ### Stage 5: Hunt for Excessive Permissions
 
 For the final stage, I applied the knowledge gained from the previous four stages to investigate an overprivileged account. My objective was to identify the account, understand its assigned permissions and scope, and determine why the assignment presented a potential security risk.
 
-With restricted audit access, I focused on identifying and documenting the issue rather than modifying or removing permissions.
+> **Navigated to PIM and clicked Activate**
+> <img width="1025" height="537" alt="image" src="https://github.com/user-attachments/assets/ff481a58-c159-42a1-bbcb-db0023d1edc4" />
 
-**Evidence:** Role assignment details and supporting access control records.
+> **Activate for operative role**
+<img width="1475" height="187" alt="image" src="https://github.com/user-attachments/assets/3307bf20-4cac-4145-839b-25153bfda19e" />
 
-<!-- Insert identified account, role and scope screenshots here. -->
+> **Resource Group**
+<img width="236" height="312" alt="image" src="https://github.com/user-attachments/assets/ad1ebae7-d9f2-4923-9bfc-41ded6481a85" />
 
-**Observation:** [Document the actual account, permissions and associated risk.]
+> **Downloaded resource assignments and found other identities assigned Owner role to the resource group**
+<img width="1713" height="646" alt="image" src="https://github.com/user-attachments/assets/63eda66c-d0e8-4512-a419-a8ade1b31247" />
 
-## 🛠️ What Broke / What Surprised Me
-
-One important takeaway was that a traditional review of Azure IAM role assignments does not necessarily provide a complete picture of privileged access. An identity might not currently have an active privileged role but could be eligible to activate one through PIM. Without examining both assignment types, an auditor could overlook potential access risks.
-
-I also learned that reviewing permissions manually becomes increasingly difficult as an environment grows. Command-line tools and Azure Resource Graph provide more efficient ways to collect and analyze access information across multiple resources.
-
-Another important distinction was that Azure RBAC roles and Microsoft Entra directory roles serve different purposes. Reviewing directory administrators alone would not identify every identity with privileged access to Azure resources.
-
-<!-- Add a real troubleshooting challenge or unexpected result from your lab. -->
-
-## 📊 Findings and Recommendations
+## Findings and Recommendations
 
 ### Findings
-
-The following table summarizes the security concerns examined during the audit. Specific lab findings should be documented in the investigation stages above.
 
 | Audit Area | Security Concern |
 | --- | --- |
@@ -116,7 +125,7 @@ The following table summarizes the security concerns examined during the audit. 
 4. **Automate access auditing:** Use Azure CLI, Azure PowerShell, and Azure Resource Graph to support repeatable access reviews.
 5. **Monitor privileged role changes:** Configure monitoring and alerts for sensitive role assignments and changes to privileged access.
 
-## 💡 What I Learned
+## What I Learned
 
 - Developed experience with Azure RBAC auditing methods using the Azure Portal, command-line tools, Azure Resource Graph, and PIM.
 - Strengthened my understanding of role assignment scopes, permission inheritance, and least privilege.
@@ -124,6 +133,6 @@ The following table summarizes the security concerns examined during the audit. 
 - Developed a better understanding of active and eligible privileged role assignments and the benefits of just-in-time access.
 - In future audits, I would combine multiple audit methods and examine both active and eligible permissions before drawing conclusions about an identity's access.
 
-## 🧰 Skills Demonstrated
+## Skills Demonstrated
 
 `Azure RBAC` `IAM` `PIM` `Azure CLI` `Azure PowerShell` `Azure Resource Graph` `KQL` `Access Reviews` `Least Privilege` `Cloud Security` `Security Auditing`
